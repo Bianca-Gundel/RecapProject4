@@ -1,0 +1,13 @@
+
+
+export default function ColorForm() {
+    return (
+
+      <form>
+      <label for="color">Your Color:</label>
+      <input type="text" id="color" name="color">
+      <input type="submit">
+      </form>
+
+    );
+  }
