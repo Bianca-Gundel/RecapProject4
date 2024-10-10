@@ -15,7 +15,6 @@ function App() {
   }
 
   function handleColorDelete(colorID) {
-    console.log("Testing");
     setColors(colors.filter((color) => color.id !== colorID));
   }
 
