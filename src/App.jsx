@@ -4,14 +4,44 @@ import "./App.css";
 import ColorForm from "./Components/ColorForm/ColorForm.jsx";
 import { uid } from "uid";
 import useLocalStorageState from "use-local-storage-state";
+import { useState, useEffect } from "react";
 
 function App() {
   const [colors, setColors] = useLocalStorageState("colors", {
     defaultValue: initialColors,
   });
 
+  const [contrastScores, setContrastScores] = useState({});
+
+  useEffect(() => {
+    async function validateAllColors() {
+      for (const color of colors) {
+        const response = await fetch(
+          "https://www.aremycolorsaccessible.com/api/are-they",
+          {
+            mode: "cors",
+            method: "POST",
+            body: JSON.stringify({ colors: [color.hex, color.contrastText] }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        const json = await response.json();
+        const score = json.overall;
+        setContrastScores((prevScores) => ({
+          ...prevScores,
+          [color.id]: score,
+        }));
+      }
+    }
+
+    validateAllColors();
+  }, [colors]);
+
   function handleSubmit(newColor) {
-    setColors([{ id: uid(), ...newColor }, ...colors]);
+    const colorWithID = { id: uid(), ...newColor };
+    setColors([colorWithID, ...colors]);
   }
 
   function handleColorDelete(colorID) {
@@ -19,9 +49,10 @@ function App() {
   }
 
   function handleColorEdit(colorID, updatedColor) {
+    const colorWithID = { id: uid(), ...updatedColor };
     setColors(
       colors.map((color) =>
-        color.id === colorID ? { id: colorID, ...updatedColor } : color
+        color.id === colorID ? { id: colorID, ...colorWithID } : color
       )
     );
   }
@@ -36,6 +67,7 @@ function App() {
           <Color
             key={color.id}
             color={color}
+            response={contrastScores[color.id] || "Loading..."}
             onColorDelete={handleColorDelete}
             onColorEdit={handleColorEdit}
           />
