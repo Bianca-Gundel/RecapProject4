@@ -16,7 +16,7 @@ export default function Color({ color, onColorDelete, onColorEdit }) {
 
   function handleEditSubmit(updatedColor) {
     onColorEdit(color.id, updatedColor);
-    setIsEditing(!isEditing);
+    handleIsEditing();
   }
 
   return (
