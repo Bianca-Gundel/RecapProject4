@@ -18,6 +18,7 @@ function App() {
 
   const [contrastScores, setContrastScores] = useState({});
   const [selectedThemeId, setSelectedThemeId] = useState("t1");
+  // const [thereIsColor, setThereIsColor] = useState(null)
 
   useEffect(() => {
     async function validateAllColors() {
@@ -45,9 +46,14 @@ function App() {
   }, [colors]);
 
   function getThemeColors() {
+
     const selectedTheme = themes.find((theme) => theme.id === selectedThemeId);
-    if (!selectedTheme) return [];
+    if (!selectedTheme) {
+      return [];
+    }
+
     return colors.filter((color) => selectedTheme.colors.includes(color.id));
+
   }
 
   function handleSubmitColor(newColor) {
@@ -123,7 +129,7 @@ function App() {
       />
       <ColorForm onSubmit={handleSubmitColor} />
 
-      {getThemeColors().map((color) => {
+      {colors.length > 0 ? getThemeColors().map((color) => {
         return (
           <Color
             key={color.id}
@@ -133,7 +139,10 @@ function App() {
             onColorEdit={handleColorEdit}
           />
         );
-      })}
+      })
+        :
+        <h2 className="text-center">No color found, please add a color</h2>
+      }
     </>
   );
 }
