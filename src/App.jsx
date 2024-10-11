@@ -5,13 +5,19 @@ import ColorForm from "./Components/ColorForm/ColorForm.jsx";
 import { uid } from "uid";
 import useLocalStorageState from "use-local-storage-state";
 import { useState, useEffect } from "react";
+import ThemeForm from "./Components/Theme/ThemeForm.jsx";
+import { initialThemes } from "./lib/themes.js";
 
 function App() {
+  const [themes, setThemes] = useLocalStorageState("themes", {
+    defaultValue: initialThemes,
+  });
   const [colors, setColors] = useLocalStorageState("colors", {
     defaultValue: initialColors,
   });
 
   const [contrastScores, setContrastScores] = useState({});
+  const [selectedThemeId, setSelectedThemeId] = useState("t1");
 
   useEffect(() => {
     async function validateAllColors() {
@@ -35,21 +41,40 @@ function App() {
         }));
       }
     }
-
     validateAllColors();
   }, [colors]);
 
-  function handleSubmit(newColor) {
+  function getThemeColors() {
+    const selectedTheme = themes.find((theme) => theme.id === selectedThemeId);
+    if (!selectedTheme) return [];
+    return colors.filter((color) => selectedTheme.colors.includes(color.id));
+  }
+
+  function handleSubmitColor(newColor) {
     const colorWithID = { id: uid(), ...newColor };
     setColors([colorWithID, ...colors]);
+    setThemes(
+      themes.map((theme) =>
+        theme.id === selectedThemeId
+          ? { ...theme, colors: [...theme.colors, colorWithID.id] }
+          : theme
+      )
+    );
   }
 
   function handleColorDelete(colorID) {
     setColors(colors.filter((color) => color.id !== colorID));
+    setThemes(
+      themes.map((theme) =>
+        theme.id === selectedThemeId
+          ? { ...theme, colors: theme.colors.filter((id) => id !== colorID) }
+          : theme
+      )
+    );
   }
 
   function handleColorEdit(colorID, updatedColor) {
-    const colorWithID = { id: uid(), ...updatedColor };
+    const colorWithID = { id: colorID, ...updatedColor };
     setColors(
       colors.map((color) =>
         color.id === colorID ? { id: colorID, ...colorWithID } : color
@@ -57,12 +82,48 @@ function App() {
     );
   }
 
+  function handleSelectTheme(event) {
+    setSelectedThemeId(event.target.value);
+  }
+
+  function handleEditingTheme(newThemeName) {
+    console.log(newThemeName);
+    console.log("selectedThemeID = " + selectedThemeId.id);
+    setThemes(
+      themes.map((theme) =>
+        theme.id === selectedThemeId.id
+          ? { ...theme, name: newThemeName }
+          : theme
+      )
+    );
+  }
+
+  function handleAddingTheme(newTheme) {
+    const themeWithID = { id: uid(), name: newTheme, colors: [] };
+    setThemes([themeWithID, ...themes]);
+    setSelectedThemeId(themeWithID);
+  }
+
+  function handleDeletingTheme() {
+    setThemes(themes.filter((theme) => theme.id !== selectedThemeId));
+    console.log(selectedThemeId);
+    setSelectedThemeId("t1");
+  }
+
   return (
     <>
       <h1>Theme Creator</h1>
-      <ColorForm onSubmit={handleSubmit} />
+      <ThemeForm
+        theme={themes}
+        selectedTheme={selectedThemeId}
+        onChangeTheme={handleSelectTheme}
+        onDeletingTheme={handleDeletingTheme}
+        onAddingTheme={handleAddingTheme}
+        onEditingTheme={handleEditingTheme}
+      />
+      <ColorForm onSubmit={handleSubmitColor} />
 
-      {colors.map((color) => {
+      {getThemeColors().map((color) => {
         return (
           <Color
             key={color.id}
